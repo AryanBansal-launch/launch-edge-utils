@@ -83,15 +83,15 @@ async function init() {
   console.log(`\n${colors.bright}${colors.cyan}🚀 Edge Utilities: Contentstack Launch Setup${colors.reset}\n`);
 
   let actionsTaken = 0;
-  let isRoot = true;
 
   // 1. Root level check: Look for package.json
   const packageJsonPath = path.join(process.cwd(), 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
-    isRoot = false;
-    console.log(`${colors.yellow}⚠️  Warning: Root directory not detected.${colors.reset}`);
-    console.log(`${colors.yellow}   We couldn't find a package.json. If this isn't your project root,${colors.reset}`);
-    console.log(`${colors.yellow}   the 'functions' folder might be created in the wrong place.\n${colors.reset}`);
+    console.log(`${colors.red}❌ Error: Root directory not detected.${colors.reset}`);
+    console.log(`${colors.yellow}Contentstack Launch requires the 'functions' folder to be at your project root${colors.reset}`);
+    console.log(`${colors.yellow}(the same directory as your package.json).${colors.reset}\n`);
+    console.log(`Please ${colors.bright}cd${colors.reset} into your project root and try again.`);
+    process.exit(1);
   }
 
   try {
@@ -114,11 +114,7 @@ async function init() {
     }
 
     // Final Summary Messages based on the state
-    if (!isRoot) {
-      console.log(`\n${colors.yellow}⚠️  Setup detected in a subdirectory!${colors.reset}`);
-      console.log(`The 'functions' folder exists here, but Contentstack Launch`);
-      console.log(`requires it to be at the ${colors.bright}project root${colors.reset} (next to package.json).`);
-    } else if (actionsTaken === 0) {
+    if (actionsTaken === 0) {
       console.log(`\n${colors.bright}${colors.blue}🏁 Everything is already set up!${colors.reset}`);
       console.log(`No changes were made to your existing files.`);
     } else {
