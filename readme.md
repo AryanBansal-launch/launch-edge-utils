@@ -27,6 +27,20 @@ npm install @launch/edge-utils
 
 ---
 
+## ⚡ Quick Start (Automatic Setup)
+
+If you are using **Contentstack Launch**, you can automatically set up your edge function directory and boilerplate handler with a single command:
+
+```bash
+npx launch-init
+```
+
+This command will:
+1. Create a `functions/` directory in your project root.
+2. Generate a `[proxy].edge.js` file with a production-ready boilerplate.
+
+---
+
 ## 🛠️ Usage Example
 
 Transform your edge handler into a powerful middleware chain:
