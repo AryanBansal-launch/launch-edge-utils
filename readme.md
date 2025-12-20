@@ -1,6 +1,6 @@
 # 🚀 Edge Utils for Contentstack Launch
 
-[![npm version](https://img.shields.io/npm/v/@launch/edge-utils.svg)](https://www.npmjs.com/package/@launch/edge-utils)
+[![npm version](https://img.shields.io/npm/v/@launch/edge-utils.svg)](https://www.npmjs.com/package/@aryanbansal-launch/edge-utils)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A lightweight, high-performance toolkit specifically designed for **Contentstack Launch Edge Functions**. Speed up your development with production-ready utilities for security, authentication, routing, and Next.js compatibility—all optimized to run at the edge.
