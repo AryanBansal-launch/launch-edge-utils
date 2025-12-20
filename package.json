@@ -1,25 +1,23 @@
 {
   "name": "@aryanbansal-launch/edge-utils",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "type": "module",
-
   "repository": {
     "type": "git",
     "url": "https://github.com/AryanBansal-launch/launch-edge-utils.git"
   },
-
   "homepage": "https://github.com/AryanBansal-launch/launch-edge-utils#readme",
-
   "bugs": {
     "url": "https://github.com/AryanBansal-launch/launch-edge-utils/issues"
   },
-
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc"
   }
