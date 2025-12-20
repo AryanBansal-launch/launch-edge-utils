@@ -1,4 +1,4 @@
-import { getClientIP } from "../utils/ip";
+import { getClientIP } from "../utils/ip.js";
 
 export function ipAccessControl(
   request: Request,

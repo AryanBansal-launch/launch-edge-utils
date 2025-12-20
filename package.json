@@ -1,18 +1,14 @@
 {
-  "name": "@launch/edge-utils",
+  "name": "@aryanbansal-launch/edge-utils",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3"
   }
 }
