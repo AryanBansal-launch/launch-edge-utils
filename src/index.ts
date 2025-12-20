@@ -5,3 +5,4 @@ export * from "./auth/basic-auth.js";
 export * from "./security/ip-access.js";
 export * from "./security/block-bots.js";
 export * from "./geo/geo-headers.js";
+export * from "./nextjs/rsc.js";
