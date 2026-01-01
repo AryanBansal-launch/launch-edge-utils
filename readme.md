@@ -48,12 +48,17 @@ import {
   protectWithBasicAuth,
   ipAccessControl,
   blockAICrawlers,
+  blockDefaultDomains,
   getGeoHeaders,
   handleNextJS_RSC
 } from "@aryanbansal-launch/edge-utils";
 
 export default async function handler(request, context) {
-  // 1. ⚛️ Fix Next.js RSC issues for specific paths
+  // 1. 🛡️ Block access via default Launch domains
+  const defaultDomainResponse = blockDefaultDomains(request);
+  if (defaultDomainResponse) return defaultDomainResponse;
+
+  // 2. ⚛️ Fix Next.js RSC issues for specific paths
   const rscResponse = await handleNextJS_RSC(request, {
     affectedPaths: ["/shop", "/about"]
   });
@@ -98,6 +103,7 @@ export default async function handler(request, context) {
 
 ### 🛡️ Security
 - **`blockAICrawlers(request, bots?)`**: Blocks common AI crawlers.
+- **`blockDefaultDomains(request, { domainToBlock? })`**: Blocks access via default Contentstack Launch domains (e.g., `contentstackapps.com`).
 - **`ipAccessControl(request, { allow?, deny? })`**: Simple IP-based firewall.
 
 ### 🔐 Authentication
