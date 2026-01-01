@@ -6,4 +6,5 @@ export * from "./security/ip-access.js";
 export * from "./security/block-bots.js";
 export * from "./security/block-default-domains.js";
 export * from "./geo/geo-headers.js";
+export * from "./launch/config.js";
 export * from "./nextjs/rsc.js";

@@ -1,11 +1,7 @@
-/**
- * Blocks access to the site when accessed via default Contentstack Launch domains.
- * This is useful for ensuring users only access the site via your custom domain.
- */
+
 export function blockDefaultDomains(
   request: Request,
   options: {
-    /** Domain substring to block (e.g., 'contentstackapps.com') */
     domainToBlock?: string;
   } = {}
 ): Response | null {

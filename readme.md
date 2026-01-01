@@ -13,6 +13,7 @@ A lightweight, high-performance toolkit specifically designed for **Contentstack
 - 🔐 **Edge Auth**: Implement Basic Auth directly at the edge for specific hostnames.
 - 📍 **Geo-Aware**: Easily extract location data from request headers.
 - ⚛️ **Next.js Ready**: Built-in fixes for RSC header issues on Launch proxies.
+- 🚀 **Cache Priming**: Easily manage cache warming URLs via CLI.
 - 🔀 **Smart Routing**: Declarative redirects based on path and method.
 - ⚡ **Zero Dependencies**: Lightweight and optimized for edge runtime limits.
 
@@ -33,6 +34,12 @@ Run this command from your **project root**:
 npx launch-init
 ```
 This will automatically create the `functions/` directory and a boilerplate `[proxy].edge.js` handler for you.
+
+### 3. Configure (Optional)
+Manage your `launch.json` (Redirects, Rewrites, and Cache Priming) interactively:
+```bash
+npx launch-config
+```
 
 ---
 
