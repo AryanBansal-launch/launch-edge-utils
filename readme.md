@@ -1,6 +1,6 @@
 # 🚀 Edge Utils for Contentstack Launch
 
-[![npm version](https://img.shields.io/npm/v/@launch/edge-utils.svg)](https://www.npmjs.com/package/@aryanbansal-launch/edge-utils)
+[![npm version](https://img.shields.io/npm/v/@aryanbansal-launch/edge-utils.svg)](https://www.npmjs.com/package/@aryanbansal-launch/edge-utils)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A lightweight, high-performance toolkit specifically designed for **Contentstack Launch Edge Functions**. Speed up your development with production-ready utilities for security, authentication, routing, and Next.js compatibility—all optimized to run at the edge.
@@ -36,7 +36,7 @@ npx launch-init
 This will automatically create the `functions/` directory and a boilerplate `[proxy].edge.js` handler for you.
 
 ### 3. Configure (Optional)
-Manage your `launch.json` (Redirects, Rewrites, and Cache Priming) interactively:
+Manage your `launch.json` ([Redirects](https://www.contentstack.com/docs/developers/launch/edge-url-redirects), [Rewrites](https://www.contentstack.com/docs/developers/launch/edge-url-rewrites), and [Cache Priming](https://www.contentstack.com/docs/developers/launch/cache-priming)) interactively:
 ```bash
 npx launch-config
 ```
@@ -71,15 +71,15 @@ export default async function handler(request, context) {
   });
   if (rscResponse) return rscResponse;
 
-  // 2. 🛡️ Block AI bots immediately
+  // 3. 🤖 Block AI bots immediately
   const botResponse = blockAICrawlers(request);
   if (botResponse) return botResponse;
 
-  // 3. 🧱 IP Whitelisting
+  // 4. 🧱 IP Whitelisting
   const ipResponse = ipAccessControl(request, { allow: ["203.0.113.10"] });
   if (ipResponse) return ipResponse;
 
-  // 4. 🔐 Domain-specific Basic Auth (e.g., for staging)
+  // 5. 🔐 Domain-specific Basic Auth (e.g., for staging)
   const authResponse = await protectWithBasicAuth(request, {
     hostnameIncludes: "staging.myapp.com",
     username: "admin",
@@ -87,7 +87,7 @@ export default async function handler(request, context) {
   });
   if (authResponse && authResponse.status === 401) return authResponse;
 
-  // 5. 🔀 SEO-friendly Redirects
+  // 6. 🔀 SEO-friendly Redirects
   const redirectResponse = redirectIfMatch(request, {
     path: "/legacy-url",
     to: "/modern-url",
@@ -95,11 +95,11 @@ export default async function handler(request, context) {
   });
   if (redirectResponse) return redirectResponse;
 
-  // 6. 📍 Geo-Location Access
+  // 7. 📍 Geo-Location Access
   const geo = getGeoHeaders(request);
   console.log(`Request from ${geo.city}, ${geo.country}`);
 
-  // 7. 🚀 Pass through to origin
+  // 8. 🚀 Pass through to origin
   return passThrough(request);
 }
 ```
@@ -109,9 +109,9 @@ export default async function handler(request, context) {
 ## 📖 API Reference
 
 ### 🛡️ Security
-- **`blockAICrawlers(request, bots?)`**: Blocks common AI crawlers.
-- **`blockDefaultDomains(request, { domainToBlock? })`**: Blocks access via default Contentstack Launch domains (e.g., `contentstackapps.com`).
-- **`ipAccessControl(request, { allow?, deny? })`**: Simple IP-based firewall.
+- **`blockAICrawlers(request, bots?)`**: Detects and blocks known AI crawlers (GPTBot, ClaudeBot, etc.) based on the User-Agent.
+- **`blockDefaultDomains(request, { domainToBlock? })`**: Prevents users from accessing your site via the default `*.contentstackapps.com` domains, forcing them to use your custom domain.
+- **`ipAccessControl(request, { allow?, deny? })`**: A simple firewall to whitelist or blacklist specific IP addresses at the edge.
 
 ### 🔐 Authentication
 - **`protectWithBasicAuth(request, options)`**: Prompt for credentials based on hostname.
@@ -130,3 +130,9 @@ export default async function handler(request, context) {
 ## 🌐 Platform Support
 
 This library is exclusively optimized for **[Contentstack Launch](https://www.contentstack.com/docs/developers/launch)**.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.

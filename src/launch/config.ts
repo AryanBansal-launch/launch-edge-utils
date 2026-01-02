@@ -22,9 +22,7 @@ export interface LaunchConfig {
   };
 }
 
-/**
- * Generates a standard launch.json configuration object.
- */
+
 export function generateLaunchConfig(options: Partial<LaunchConfig>): LaunchConfig {
   return {
     redirects: options.redirects || [],
