@@ -3,133 +3,123 @@
 [![npm version](https://img.shields.io/npm/v/@aryanbansal-launch/edge-utils.svg)](https://www.npmjs.com/package/@aryanbansal-launch/edge-utils)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A lightweight, high-performance toolkit specifically designed for **Contentstack Launch Edge Functions**. Speed up your development with production-ready utilities for security, authentication, routing, and Next.js compatibility—all optimized to run at the edge.
-
----
-
-## ✨ Features
-
-- 🛡️ **Security First**: Block AI crawlers and manage IP access with ease.
-- 🔐 **Edge Auth**: Implement Basic Auth directly at the edge for specific hostnames.
-- 📍 **Geo-Aware**: Easily extract location data from request headers.
-- ⚛️ **Next.js Ready**: Built-in fixes for RSC header issues on Launch proxies.
-- 🚀 **Cache Priming**: Easily manage cache warming URLs via CLI.
-- 🔀 **Smart Routing**: Declarative redirects based on path and method.
-- ⚡ **Zero Dependencies**: Lightweight and optimized for edge runtime limits.
+A comprehensive toolkit for [Contentstack Launch](https://www.contentstack.com/docs/developers/launch) (the high-performance frontend hosting service by [Contentstack](https://www.contentstack.com/)). This library provides production-ready utilities to simplify [Edge Functions](https://www.contentstack.com/docs/developers/launch/edge-functions) development, security, and performance optimization.
 
 ---
 
 ## ⚡ Quick Start (Recommended)
 
-Set up your entire edge environment in seconds with our automated CLI tool.
+Bootstrap your edge environment in seconds using our automated initializer. Run this command from your **project root**:
 
-### 1. Install
 ```bash
+# Install the package
 npm install @aryanbansal-launch/edge-utils
+
+# Initialize Edge Functions
+npx create-launch-edge
 ```
 
-### 2. Initialize
-Run this command from your **project root**:
-```bash
-npx launch-init
-```
-This will automatically create the `functions/` directory and a boilerplate `[proxy].edge.js` handler for you.
-
-### 3. Configure (Optional)
-Manage your `launch.json` ([Redirects](https://www.contentstack.com/docs/developers/launch/edge-url-redirects), [Rewrites](https://www.contentstack.com/docs/developers/launch/edge-url-rewrites), and [Cache Priming](https://www.contentstack.com/docs/developers/launch/cache-priming)) interactively:
-```bash
-npx launch-config
-```
+This command will automatically create the `functions/` directory and a production-ready `[proxy].edge.js` boilerplate handler.
 
 ---
 
-## 🛠️ Usage Example
+## ✨ Features & Deep Dive
 
-Once initialized, your `functions/[proxy].edge.js` will look like a powerful middleware chain:
+### 🛡️ Security & Access Control
+- **[Block AI Crawlers](https://www.contentstack.com/docs/developers/launch/blocking-ai-crawlers)**: Automatically detects and rejects requests from known scrapers (GPTBot, ClaudeBot, etc.) to protect your content and server resources.
+- **[Restricted Default Domains](https://www.contentstack.com/docs/developers/launch/blocking-default-launch-domains-from-google-search)**: By default, Launch provides a `*.contentstackapps.com` domain. This utility forces visitors to your custom domain, which is essential for SEO (preventing duplicate content) and professional branding.
+- **[IP Access Control](https://www.contentstack.com/docs/developers/launch/ip-based-access-control-using-edge-functions)**: Create a lightweight firewall at the edge to whitelist internal teams or block malicious IPs before they hit your application logic.
+
+### ⚛️ Next.js Optimization
+- **[RSC Header Fix](https://www.contentstack.com/docs/developers/launch/handling-nextjs-rsc-issues-on-launch)**: Next.js React Server Components (RSC) use a special `rsc` header. Sometimes, proxies or caches can incorrectly serve RSC data when a full page load is expected. This utility detects these edge cases and strips the header to ensure the correct response type is served.
+
+### 📍 Performance & Geo-Awareness
+- **[Geo-Location Access](https://www.contentstack.com/docs/developers/launch/geolocation-headers-in-launch)**: Contentstack Launch injects geography data into request headers. This utility parses those headers into a clean object (`country`, `city`, `region`, etc.), enabling you to personalize content or restrict features based on user location.
+- **[Cache Priming](https://www.contentstack.com/docs/developers/launch/cache-priming)**: Use the `launch-config` CLI to pre-load critical URLs into the edge cache, eliminating "cold start" latency for your first visitors after a deployment.
+
+### 🔀 Smart Routing
+- **Declarative Redirects**: Handle complex, logic-based redirects at runtime.
+- **Runtime vs Config**: 
+    - Use **`launch.json`** ([Static Redirects](https://www.contentstack.com/docs/developers/launch/edge-url-redirects)) for high-performance, simple path-to-path mapping.
+    - Use **`redirectIfMatch`** (this library) for dynamic redirects that require logic, such as checking cookies, headers, or geo-location before redirecting.
+
+---
+
+## 🛠️ Detailed Usage Example
+
+Your `functions/[proxy].edge.js` acts as a **middleware chain**. You can layer these utilities to create complex edge logic:
 
 ```javascript
 import {
-  jsonResponse,
-  passThrough,
-  redirectIfMatch,
-  protectWithBasicAuth,
-  ipAccessControl,
-  blockAICrawlers,
   blockDefaultDomains,
+  handleNextJS_RSC,
+  blockAICrawlers,
+  ipAccessControl,
+  redirectIfMatch,
   getGeoHeaders,
-  handleNextJS_RSC
+  passThrough
 } from "@aryanbansal-launch/edge-utils";
 
 export default async function handler(request, context) {
-  // 1. 🛡️ Block access via default Launch domains
-  const defaultDomainResponse = blockDefaultDomains(request);
-  if (defaultDomainResponse) return defaultDomainResponse;
+  // 1. 🛡️ Force Custom Domain (SEO Best Practice)
+  // Blocks access via *.contentstackapps.com
+  const domainCheck = blockDefaultDomains(request);
+  if (domainCheck) return domainCheck;
 
-  // 2. ⚛️ Fix Next.js RSC issues for specific paths
-  const rscResponse = await handleNextJS_RSC(request, {
+  // 2. ⚛️ Fix Next.js RSC Header issues 
+  // Prevents "JSON-only" responses on page refreshes
+  const rscCheck = await handleNextJS_RSC(request, {
     affectedPaths: ["/shop", "/about"]
   });
-  if (rscResponse) return rscResponse;
+  if (rscCheck) return rscCheck;
 
-  // 3. 🤖 Block AI bots immediately
-  const botResponse = blockAICrawlers(request);
-  if (botResponse) return botResponse;
+  // 3. 🤖 Block Aggressive Bots
+  const botCheck = blockAICrawlers(request);
+  if (botCheck) return botCheck;
 
-  // 4. 🧱 IP Whitelisting
-  const ipResponse = ipAccessControl(request, { allow: ["203.0.113.10"] });
-  if (ipResponse) return ipResponse;
+  // 4. 🧱 Firewall
+  const ipCheck = ipAccessControl(request, { allow: ["203.0.113.10"] });
+  if (ipCheck) return ipCheck;
 
-  // 5. 🔐 Domain-specific Basic Auth (e.g., for staging)
-  const authResponse = await protectWithBasicAuth(request, {
-    hostnameIncludes: "staging.myapp.com",
-    username: "admin",
-    password: "securepassword123"
-  });
-  if (authResponse && authResponse.status === 401) return authResponse;
-
-  // 6. 🔀 SEO-friendly Redirects
-  const redirectResponse = redirectIfMatch(request, {
-    path: "/legacy-url",
-    to: "/modern-url",
+  // 5. 🔀 Logic-Based Redirects
+  const redirect = redirectIfMatch(request, {
+    path: "/legacy-page",
+    to: "/new-page",
     status: 301
   });
-  if (redirectResponse) return redirectResponse;
+  if (redirect) return redirect;
 
-  // 7. 📍 Geo-Location Access
+  // 6. 📍 Personalization
   const geo = getGeoHeaders(request);
-  console.log(`Request from ${geo.city}, ${geo.country}`);
+  if (geo.country === "UK") {
+    // Custom logic for UK visitors...
+  }
 
-  // 8. 🚀 Pass through to origin
+  // 7. 🚀 Pass through to Origin
   return passThrough(request);
 }
 ```
 
 ---
 
-## 📖 API Reference
+## ⚙️ Configuration CLI
 
-### 🛡️ Security
-- **`blockAICrawlers(request, bots?)`**: Detects and blocks known AI crawlers (GPTBot, ClaudeBot, etc.) based on the User-Agent.
-- **`blockDefaultDomains(request, { domainToBlock? })`**: Prevents users from accessing your site via the default `*.contentstackapps.com` domains, forcing them to use your custom domain.
-- **`ipAccessControl(request, { allow?, deny? })`**: A simple firewall to whitelist or blacklist specific IP addresses at the edge.
+Manage your `launch.json` file interactively to handle bulk settings:
 
-### 🔐 Authentication
-- **`protectWithBasicAuth(request, options)`**: Prompt for credentials based on hostname.
+```bash
+npx launch-config
+```
 
-### 🔀 Redirection
-- **`redirectIfMatch(request, options)`**: Perform SEO-friendly redirects at the edge.
-
-### 📍 Geo Location
-- **`getGeoHeaders(request)`**: Returns an object with `country`, `region`, `city`, `latitude`, `longitude`.
-
-### ⚛️ Next.js
-- **`handleNextJS_RSC(request, { affectedPaths })`**: Resolves RSC header issues on Contentstack Launch.
+### Supported Settings:
+- **Bulk Redirects**: Add multiple sources and destinations easily.
+- **Rewrites**: Map internal paths to external APIs or micro-services.
+- **Cache Priming**: Add a comma-separated list of URLs to warm up the CDN.
 
 ---
 
 ## 🌐 Platform Support
 
-This library is exclusively optimized for **[Contentstack Launch](https://www.contentstack.com/docs/developers/launch)**.
+This library is exclusively optimized for **[Contentstack Launch](https://www.contentstack.com/docs/developers/launch)**. It assumes an environment where `Request`, `Response`, and standard Edge Global APIs are available.
 
 ---
 

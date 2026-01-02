@@ -85,7 +85,7 @@ export default async function handler(request, context) {
 `.trim();
 
 async function init() {
-  console.log(`\n${colors.bright}${colors.cyan}🚀 Edge Utilities: Contentstack Launch Setup${colors.reset}\n`);
+  console.log(`\n${colors.bright}${colors.cyan}🚀 create-launch-edge: Contentstack Launch Initializer${colors.reset}\n`);
 
   let actionsTaken = 0;
 

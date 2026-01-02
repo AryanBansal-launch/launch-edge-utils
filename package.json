@@ -13,7 +13,7 @@
   },
   "main": "dist/index.js",
   "bin": {
-    "launch-init": "./bin/launch-init.js",
+    "create-launch-edge": "./bin/launch-init.js",
     "launch-config": "./bin/launch-config.js"
   },
   "exports": {
