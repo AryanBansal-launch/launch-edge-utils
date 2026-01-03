@@ -29,6 +29,7 @@ This command will automatically create the `functions/` directory and a producti
 - **[Block AI Crawlers](https://www.contentstack.com/docs/developers/launch/blocking-ai-crawlers)**: Automatically detects and rejects requests from known scrapers (GPTBot, ClaudeBot, etc.) to protect your content and server resources.
 - **[Restricted Default Domains](https://www.contentstack.com/docs/developers/launch/blocking-default-launch-domains-from-google-search)**: By default, Launch provides a `*.contentstackapps.com` domain. This utility forces visitors to your custom domain, which is essential for SEO (preventing duplicate content) and professional branding.
 - **[IP Access Control](https://www.contentstack.com/docs/developers/launch/ip-based-access-control-using-edge-functions)**: Create a lightweight firewall at the edge to whitelist internal teams or block malicious IPs before they hit your application logic.
+- **[Edge Auth](https://www.contentstack.com/docs/developers/launch/password-protection-for-environments)**: Implement [Basic Authentication](https://www.contentstack.com/docs/developers/launch/password-protection-for-environments) directly at the edge to protect staging environments or specific paths. (Note: Hashing is recommended for production environments).
 
 ### ⚛️ Next.js Optimization
 - **[RSC Header Fix](https://www.contentstack.com/docs/developers/launch/handling-nextjs-rsc-issues-on-launch)**: Next.js React Server Components (RSC) use a special `rsc` header. Sometimes, proxies or caches can incorrectly serve RSC data when a full page load is expected. This utility detects these edge cases and strips the header to ensure the correct response type is served.
@@ -55,6 +56,7 @@ import {
   handleNextJS_RSC,
   blockAICrawlers,
   ipAccessControl,
+  protectWithBasicAuth,
   redirectIfMatch,
   getGeoHeaders,
   passThrough
@@ -81,7 +83,15 @@ export default async function handler(request, context) {
   const ipCheck = ipAccessControl(request, { allow: ["203.0.113.10"] });
   if (ipCheck) return ipCheck;
 
-  // 5. 🔀 Logic-Based Redirects
+  // 5. 🔐 Password Protection
+  const auth = await protectWithBasicAuth(request, {
+    hostnameIncludes: "staging.myapp.com",
+    username: "admin",
+    password: "securepassword123"
+  });
+  if (auth && auth.status === 401) return auth;
+
+  // 6. 🔀 Logic-Based Redirects
   const redirect = redirectIfMatch(request, {
     path: "/legacy-page",
     to: "/new-page",
@@ -89,13 +99,13 @@ export default async function handler(request, context) {
   });
   if (redirect) return redirect;
 
-  // 6. 📍 Personalization
+  // 7. 📍 Personalization
   const geo = getGeoHeaders(request);
   if (geo.country === "UK") {
     // Custom logic for UK visitors...
   }
 
-  // 7. 🚀 Pass through to Origin
+  // 8. 🚀 Pass through to Origin
   return passThrough(request);
 }
 ```
