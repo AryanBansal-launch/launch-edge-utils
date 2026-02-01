@@ -387,11 +387,161 @@ if (redirect) return redirect;
 - A/B testing redirects
 - Maintenance mode redirects
 
-**When to Use:**
-- **Edge Functions (this utility)**: Dynamic redirects requiring logic (cookies, headers, geo)
-- **launch.json**: Static path-to-path redirects (better performance)
-
 **Learn More:** [Edge URL Redirects](https://www.contentstack.com/docs/developers/launch/edge-url-redirects)
+
+---
+
+### 📊 Redirects: Config vs Edge Functions
+
+Contentstack Launch offers **two ways** to handle redirects. Choose the right approach based on your needs:
+
+#### Option 1: Config-Based Redirects (`launch.json`)
+
+**Best for:** Static, predictable redirects that don't require logic
+
+**Pros:**
+- ⚡ **Faster**: No edge function execution overhead
+- 🎯 **Simpler**: Pure configuration, no code needed
+- 📦 **Bulk-friendly**: Easy to manage hundreds/thousands of redirects
+- 🔧 **Easy updates**: Use `npx launch-config` CLI with CSV/JSON import
+
+**Cons:**
+- ❌ No dynamic logic (can't check cookies, headers, geo, etc.)
+- ❌ No conditional redirects based on request data
+- ❌ Limited to exact path or wildcard matching
+
+**Setup:**
+```bash
+# Interactive CLI
+npx launch-config
+
+# Or bulk import from CSV/JSON
+npx launch-config
+# Choose option 2 or 3 for bulk import
+```
+
+**Example `launch.json`:**
+```json
+{
+  "redirects": [
+    {
+      "source": "/old-blog/:slug",
+      "destination": "/blog/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/old-*",
+      "destination": "/products/new-*",
+      "statusCode": 308
+    }
+  ]
+}
+```
+
+**When to use:**
+- ✅ SEO migrations with hundreds of URL changes
+- ✅ Simple path rewrites (e.g., `/old-path` → `/new-path`)
+- ✅ Bulk product SKU redirects
+- ✅ Static site restructuring
+- ✅ Predictable, rule-based redirects
+
+---
+
+#### Option 2: Edge Function Redirects (This Package)
+
+**Best for:** Dynamic redirects requiring logic or request inspection
+
+**Pros:**
+- 🧠 **Smart**: Access cookies, headers, geo-location, user-agent
+- 🎨 **Flexible**: Complex conditional logic
+- 🔄 **Dynamic**: Redirect based on A/B tests, feature flags, user data
+- 🌍 **Contextual**: Different redirects per country/region
+
+**Cons:**
+- 🐌 Slightly slower (edge function execution)
+- 🔧 Requires code changes
+- 📝 More complex for simple redirects
+
+**Setup:**
+```javascript
+import { redirectIfMatch } from '@aryanbansal-launch/edge-utils';
+
+export default async function handler(request) {
+  // Dynamic redirect based on cookie
+  const cookie = request.headers.get('cookie');
+  if (cookie?.includes('beta=true')) {
+    return Response.redirect(new URL('/beta-features', request.url), 302);
+  }
+
+  // Geo-based redirect
+  const country = request.headers.get('x-cs-country');
+  if (country === 'FR') {
+    return Response.redirect('https://fr.mysite.com', 302);
+  }
+
+  // Conditional redirect
+  const redirect = redirectIfMatch(request, {
+    path: "/old-page",
+    to: "/new-page",
+    method: "GET",
+    status: 301
+  });
+  if (redirect) return redirect;
+
+  return passThrough(request);
+}
+```
+
+**When to use:**
+- ✅ Geo-location based redirects
+- ✅ A/B testing redirects
+- ✅ Cookie/session-based routing
+- ✅ User-agent specific redirects (mobile vs desktop)
+- ✅ Feature flag redirects
+- ✅ Maintenance mode with exceptions
+- ✅ Complex conditional logic
+
+---
+
+#### Quick Decision Guide
+
+| Scenario | Use Config | Use Edge Function |
+|----------|-----------|-------------------|
+| 500+ simple URL redirects | ✅ | ❌ |
+| SEO migration from old site | ✅ | ❌ |
+| Redirect based on country | ❌ | ✅ |
+| A/B test routing | ❌ | ✅ |
+| Cookie-based redirects | ❌ | ✅ |
+| Mobile vs desktop routing | ❌ | ✅ |
+| Simple path changes | ✅ | ❌ |
+| Maintenance mode (all users) | ✅ | ❌ |
+| Maintenance mode (except admins) | ❌ | ✅ |
+| Bulk product SKU changes | ✅ | ❌ |
+
+**💡 Pro Tip:** You can use **both** approaches together! Use `launch.json` for bulk static redirects and edge functions for dynamic logic.
+
+**Example Combined Approach:**
+```javascript
+// launch.json - handles 1000+ static SEO redirects
+{
+  "redirects": [
+    { "source": "/old-blog/:slug", "destination": "/blog/:slug", "statusCode": 301 }
+    // ... 1000 more redirects
+  ]
+}
+
+// functions/[proxy].edge.js - handles dynamic logic
+export default async function handler(request) {
+  // Geo-based redirect (dynamic)
+  const country = request.headers.get('x-cs-country');
+  if (country === 'FR') {
+    return Response.redirect('https://fr.mysite.com', 302);
+  }
+
+  // Static redirects handled by launch.json automatically
+  return passThrough(request);
+}
+```
 
 ---
 
@@ -808,10 +958,10 @@ Next Steps:
 
 ### `npx launch-config`
 
-Interactive CLI to manage `launch.json` configuration.
+Interactive CLI to manage `launch.json` configuration with support for bulk imports.
 
 **What it does:**
-- Add/manage redirects
+- Add/manage redirects (one-by-one or bulk import)
 - Configure rewrites
 - Set up cache priming URLs
 - Preserves existing configuration
@@ -825,13 +975,14 @@ npx launch-config
 ```
 🚀 Launch Configuration Generator
 
-Do you want to add a Redirect? (y/n): y
-   Source path (e.g., /source): /old-page
-   Destination path (e.g., /destination): /new-page
-   Status code (default 308): 301
-   ✔ Redirect added.
-
-Do you want to add a Redirect? another? (y/n): n
+How would you like to add redirects?
+   1) One by one (interactive)
+   2) Bulk import from CSV file
+   3) Bulk import from JSON file
+   4) Skip
+Choose (1-4): 2
+   Enter CSV file path (e.g., ./redirects.csv): ./redirects.csv
+   ✔ Imported 150 redirects from CSV.
 
 Do you want to add a Rewrite? (y/n): y
    Source path (e.g., /api/*): /api/*
@@ -844,6 +995,47 @@ Enter URLs separated by commas (e.g., /home,/about,/shop): /,/about,/products
 
 ✅ Successfully updated launch.json!
 ```
+
+#### Bulk Import Formats
+
+**CSV Format** (`redirects.csv`):
+```csv
+source,destination,statusCode
+/old-blog/post-1,/blog/post-1,301
+/old-blog/post-2,/blog/post-2,301
+/products/old-sku-123,/products/new-sku-456,308
+/legacy/*,/new/*,301
+```
+
+**JSON Format** (`redirects.json`):
+```json
+[
+  {
+    "source": "/old-blog/post-1",
+    "destination": "/blog/post-1",
+    "statusCode": 301
+  },
+  {
+    "source": "/old-blog/post-2",
+    "destination": "/blog/post-2",
+    "statusCode": 301
+  },
+  {
+    "source": "/products/old-sku-123",
+    "destination": "/products/new-sku-456",
+    "statusCode": 308
+  }
+]
+```
+
+**Use Cases for Bulk Import:**
+- Migrating from another platform with hundreds of URLs
+- SEO redirects from spreadsheet/database exports
+- Bulk product SKU changes
+- Content restructuring with many path changes
+
+**Example Files:**
+See `examples/redirects.csv` and `examples/redirects.json` in this package for ready-to-use templates.
 
 **Learn More:**
 - [Static Redirects](https://www.contentstack.com/docs/developers/launch/edge-url-redirects)

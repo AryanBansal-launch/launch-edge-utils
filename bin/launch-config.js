@@ -66,19 +66,64 @@ async function run() {
   }
 
   // 1. Redirects
-  while (true) {
-    const addRedirect = await question(`Do you want to add a Redirect?${config.redirects.length > 0 ? ' another?' : ''} (y/n): `);
-    if (addRedirect.toLowerCase() !== 'y') break;
-    
-    const source = await question('   Source path (e.g., /source): ');
-    const destination = await question('   Destination path (e.g., /destination): ');
-    const code = await question('   Status code (default 308): ');
-    config.redirects.push({
-      source,
-      destination,
-      statusCode: parseInt(code) || 308
-    });
-    console.log(`${colors.green}   ✔ Redirect added.${colors.reset}`);
+  const redirectMode = await question(`How would you like to add redirects?\n   1) One by one (interactive)\n   2) Bulk import from CSV file\n   3) Bulk import from JSON file\n   4) Skip\nChoose (1-4): `);
+  
+  if (redirectMode === '1') {
+    // Interactive mode
+    while (true) {
+      const addRedirect = await question(`Do you want to add a Redirect?${config.redirects.length > 0 ? ' another?' : ''} (y/n): `);
+      if (addRedirect.toLowerCase() !== 'y') break;
+      
+      const source = await question('   Source path (e.g., /source): ');
+      const destination = await question('   Destination path (e.g., /destination): ');
+      const code = await question('   Status code (default 308): ');
+      config.redirects.push({
+        source,
+        destination,
+        statusCode: parseInt(code) || 308
+      });
+      console.log(`${colors.green}   ✔ Redirect added.${colors.reset}`);
+    }
+  } else if (redirectMode === '2') {
+    // CSV import
+    const csvPath = await question('   Enter CSV file path (e.g., ./redirects.csv): ');
+    try {
+      const csvContent = fs.readFileSync(path.resolve(csvPath), 'utf-8');
+      const lines = csvContent.split('\n').filter(line => line.trim());
+      
+      // Skip header if present
+      const startIndex = lines[0].toLowerCase().includes('source') ? 1 : 0;
+      
+      for (let i = startIndex; i < lines.length; i++) {
+        const [source, destination, statusCode] = lines[i].split(',').map(s => s.trim());
+        if (source && destination) {
+          config.redirects.push({
+            source,
+            destination,
+            statusCode: parseInt(statusCode) || 308
+          });
+        }
+      }
+      console.log(`${colors.green}   ✔ Imported ${lines.length - startIndex} redirects from CSV.${colors.reset}`);
+    } catch (error) {
+      console.log(`${colors.red}   ✖ Error reading CSV file: ${error.message}${colors.reset}`);
+    }
+  } else if (redirectMode === '3') {
+    // JSON import
+    const jsonPath = await question('   Enter JSON file path (e.g., ./redirects.json): ');
+    try {
+      const jsonContent = fs.readFileSync(path.resolve(jsonPath), 'utf-8');
+      const redirects = JSON.parse(jsonContent);
+      
+      if (Array.isArray(redirects)) {
+        config.redirects.push(...redirects);
+        console.log(`${colors.green}   ✔ Imported ${redirects.length} redirects from JSON.${colors.reset}`);
+      } else {
+        console.log(`${colors.red}   ✖ JSON file must contain an array of redirect objects.${colors.reset}`);
+      }
+    } catch (error) {
+      console.log(`${colors.red}   ✖ Error reading JSON file: ${error.message}${colors.reset}`);
+    }
   }
 
   // 2. Rewrites

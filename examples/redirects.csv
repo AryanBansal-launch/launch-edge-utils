@@ -1,0 +1,12 @@
+source,destination,statusCode
+/old-blog/post-1,/blog/post-1,301
+/old-blog/post-2,/blog/post-2,301
+/old-blog/post-3,/blog/post-3,301
+/products/old-sku-123,/products/new-sku-456,308
+/products/old-sku-789,/products/new-sku-101,308
+/legacy/about,/about,301
+/legacy/contact,/contact,301
+/legacy/pricing,/pricing,301
+/old-shop/*,/shop/*,301
+/archive/*,/blog/archive/*,301
+

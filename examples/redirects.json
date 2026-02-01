@@ -1,0 +1,53 @@
+[
+  {
+    "source": "/old-blog/post-1",
+    "destination": "/blog/post-1",
+    "statusCode": 301
+  },
+  {
+    "source": "/old-blog/post-2",
+    "destination": "/blog/post-2",
+    "statusCode": 301
+  },
+  {
+    "source": "/old-blog/post-3",
+    "destination": "/blog/post-3",
+    "statusCode": 301
+  },
+  {
+    "source": "/products/old-sku-123",
+    "destination": "/products/new-sku-456",
+    "statusCode": 308
+  },
+  {
+    "source": "/products/old-sku-789",
+    "destination": "/products/new-sku-101",
+    "statusCode": 308
+  },
+  {
+    "source": "/legacy/about",
+    "destination": "/about",
+    "statusCode": 301
+  },
+  {
+    "source": "/legacy/contact",
+    "destination": "/contact",
+    "statusCode": 301
+  },
+  {
+    "source": "/legacy/pricing",
+    "destination": "/pricing",
+    "statusCode": 301
+  },
+  {
+    "source": "/old-shop/*",
+    "destination": "/shop/*",
+    "statusCode": 301
+  },
+  {
+    "source": "/archive/*",
+    "destination": "/blog/archive/*",
+    "statusCode": 301
+  }
+]
+

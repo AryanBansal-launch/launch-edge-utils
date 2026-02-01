@@ -175,6 +175,7 @@ ${colors.dim}──────────────────────�
   ${colors.cyan}npx launch-config${colors.reset}
     Interactive CLI to manage launch.json
     Configure: redirects, rewrites, cache priming
+    Supports bulk import from CSV/JSON files
 
   ${colors.cyan}npx launch-help${colors.reset}
     Display this help guide
