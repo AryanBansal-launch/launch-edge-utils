@@ -14,7 +14,8 @@
   "main": "dist/index.js",
   "bin": {
     "create-launch-edge": "./bin/launch-init.js",
-    "launch-config": "./bin/launch-config.js"
+    "launch-config": "./bin/launch-config.js",
+    "launch-help": "./bin/launch-help.js"
   },
   "exports": {
     ".": "./dist/index.js"
