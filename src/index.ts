@@ -1,3 +1,4 @@
+export * from "./dev/rewrite-origin.js";
 export * from "./response/json.js";
 export * from "./response/passthrough.js";
 export * from "./redirect/redirect.js";

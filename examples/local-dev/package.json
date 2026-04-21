@@ -1,0 +1,11 @@
+{
+  "name": "local-dev-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "launch-edge-test-local"
+  },
+  "dependencies": {
+    "@aryanbansal-launch/edge-utils": "file:../.."
+  }
+}

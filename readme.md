@@ -10,11 +10,25 @@ A comprehensive toolkit for [Contentstack Launch](https://www.contentstack.com/d
 ## 📋 Table of Contents
 
 - [Quick Start](#-quick-start)
+- [User journey](#-user-journey)
 - [Usage Flow](#-usage-flow)
 - [Complete API Reference](#-complete-api-reference)
 - [Real-World Examples](#-real-world-examples)
 - [CLI Commands](#-cli-commands)
 - [Platform Support](#-platform-support)
+
+A lightweight, high-performance toolkit specifically designed for **Contentstack Launch Edge Functions**. Speed up your development with production-ready utilities for security, authentication, routing, and Next.js compatibility—all optimized to run at the edge.
+
+---
+
+## ✨ Features
+
+- 🛡️ **Security First**: Block AI crawlers and manage IP access with ease.
+- 🔐 **Edge Auth**: Implement Basic Auth directly at the edge for specific hostnames.
+- 📍 **Geo-Aware**: Easily extract location data from request headers.
+- ⚛️ **Next.js Ready**: Built-in fixes for RSC header issues on Launch proxies.
+- 🔀 **Smart Routing**: Declarative redirects based on path and method.
+- ⚡ **Lean edge code**: No runtime deps inside the utilities you import at the edge; the npm package bundles **Wrangler** so local testing works without a separate install.
 
 ---
 
@@ -48,6 +62,98 @@ This automatically creates:
 ```bash
 npx launch-help
 ```
+
+---
+
+## 🧭 User journey
+
+Step-by-step paths for the three most common goals. Adjust paths and ports to match your app.
+
+### Scenario 1: Use a particular edge utility in production
+
+You want **one or more** helpers from this library (for example Basic Auth, bot blocking, or `redirectIfMatch`) in your **Contentstack Launch** edge handler.
+
+1. **Install the package** (from your project root, next to `package.json`):
+   ```bash
+   npm install @aryanbansal-launch/edge-utils
+   ```
+2. **Scaffold the edge function file** (skip if `functions/[proxy].edge.js` already exists):
+   ```bash
+   npx create-launch-edge
+   ```
+   This creates `functions/` and a starter `functions/[proxy].edge.js` if missing.
+3. **Open** `functions/[proxy].edge.js` in your editor.
+4. **Import** only what you need from the package, for example:
+   ```javascript
+   import { blockAICrawlers, redirectIfMatch, passThrough } from "@aryanbansal-launch/edge-utils";
+   ```
+5. **Wire your handler**: call each utility in order; when a function returns a `Response`, return it immediately; otherwise continue until `passThrough(request)` (or your own `fetch`) sends traffic to the origin.
+6. **Review the API** (optional):
+   ```bash
+   npx launch-help
+   ```
+7. **Deploy** your site through **Contentstack Launch** using your normal workflow (CLI or UI). Launch runs `functions/[proxy].edge.js` at the edge before traffic hits your app.
+
+---
+
+### Scenario 2: Test edge utilities locally (Wrangler / Miniflare)
+
+You want to **try** a preset (redirect, JSON route, basic auth, bots, or Next.js RSC) **on your machine** before deploying.
+
+1. **Install the package**:
+   ```bash
+   npm install @aryanbansal-launch/edge-utils
+   ```
+2. **One-time scaffold** (creates `functions/dev-worker.edge.js` and `wrangler.toml` if they are missing; safe to run again):
+   ```bash
+   npx create-launch-edge
+   ```
+3. **Start the local wizard** (pick a preset interactively):
+   ```bash
+   npx launch-edge-local
+   ```
+   Or:
+   ```bash
+   npx create-launch-edge local
+   ```
+4. **Enter a number** `1`–`5` for the preset. If `[proxy].edge.js` already exists, confirm overwrite when prompted (`y`).
+5. **Align the backend URL** with your app: open `wrangler.toml` and set `[vars] BACKEND_URL` to your dev server (default `http://127.0.0.1:3000`). Change the port if your app uses something else (for example `5173` for Vite).
+6. **Start your app** in another terminal (for example `npm run dev`) so it listens on that host/port.
+7. **Start the local Worker** from the **same project root** as `wrangler.toml`:
+   ```bash
+   npx launch-edge-test-local
+   ```
+   This runs the bundled `wrangler dev`. Extra args are supported, e.g. `npx launch-edge-test-local --port 8788` or `--var BACKEND_URL=http://127.0.0.1:5173`.
+8. **Open the URL** Wrangler prints (often `http://localhost:8787`) and the path the wizard suggests (for example `/api/edge-ping` for the JSON preset).
+9. **Optional checks**: see `npx launch-help` under **Local testing** for curl / bot tests.
+
+**Note:** After you change **source** in `@aryanbansal-launch/edge-utils`, run `npm run build` in the package before linking or publishing so `dist/` matches `src/`.
+
+---
+
+### Scenario 3: Redirects, rewrites, and cache priming (`launch.json`)
+
+You want **config-driven** redirects, rewrites, or cache priming **without** coding them in the edge file—Launch reads **`launch.json`** at the project root.
+
+1. **Install the package** (includes the `launch-config` CLI):
+   ```bash
+   npm install @aryanbansal-launch/edge-utils
+   ```
+2. **Run the interactive configurator** from your **project root**:
+   ```bash
+   npx launch-config
+   ```
+3. **Follow the prompts** to add:
+   - **Redirects** (one-by-one or bulk),
+   - **Rewrites** (source path → destination),
+   - **Cache priming URLs** (relative paths only, as required by Launch).
+4. **Bulk import** (optional): choose CSV or JSON when the CLI asks, and provide a file path to import many redirects at once.
+5. **Confirm** `launch.json` is created or updated at the **root** of your Launch project (alongside `package.json`).
+6. **Deploy** through Contentstack Launch so the new configuration is applied.
+
+**Alternative (code):** you can build `launch.json` in code with `generateLaunchConfig` from this package and write the file yourself—see the **Configuration** subsection in the [Complete API Reference](#-complete-api-reference) below.
+
+**Using both:** keep bulk static rules in `launch.json` and use `functions/[proxy].edge.js` for dynamic logic (geo, cookies, A/B tests). They can coexist on the same project.
 
 ---
 
@@ -291,7 +397,7 @@ Add Basic Authentication to protect environments.
 **Parameters:**
 - `request` (Request) - The incoming request object
 - `options` (object)
-  - `hostnameIncludes` (string) - Protect URLs containing this hostname
+  - `hostnameIncludes` (string) - Substring match against the request URL hostname, the `Host` header, or `X-Forwarded-Host` (without port). `rewriteRequestToOrigin` sets `X-Forwarded-Host` when the URL is rewritten so `hostnameIncludes: "localhost"` works with `npx launch-edge-test-local` while `BACKEND_URL` uses `127.0.0.1`.
   - `username` (string) - Username for authentication
   - `password` (string) - Password for authentication
   - `realm` (string, optional) - Auth realm name (default: "Protected Area")
@@ -299,7 +405,7 @@ Add Basic Authentication to protect environments.
 **Returns:** `Promise<Response> | null`
 - Returns `401 Unauthorized` if auth fails
 - Returns authenticated response if credentials valid
-- Returns `null` if hostname doesn't match
+- Returns `null` if neither the URL hostname nor the `Host` header matches `hostnameIncludes`
 
 **Example:**
 ```javascript
@@ -922,6 +1028,60 @@ export default async function handler(request, context) {
 
 ---
 
+## 🧪 Local testing (Wrangler / Miniflare)
+
+Test your `functions/[proxy].edge.js` chain **locally** without deploying. Wrangler’s dev server uses **Miniflare**, which runs a Workers-compatible runtime on your machine.
+
+### Interactive wizard (easiest)
+
+From your **project root** (where `package.json` lives):
+
+```bash
+npx create-launch-edge local
+```
+
+Or the short alias:
+
+```bash
+npx launch-edge-local
+```
+
+You’ll get a numbered menu (redirect, JSON route, basic auth, bot block, or Next.js RSC). Pick one; the CLI writes `functions/[proxy].edge.js` for that scenario, ensures `dev-worker.edge.js` and `wrangler.toml` exist, then prints a short checklist (start your app, run the dev server, open the test URL). **Wrangler** is installed automatically as a dependency of this package. If `[proxy].edge.js` already exists, you’re asked before it’s overwritten.
+
+### Start the local Worker (no `wrangler` typing)
+
+From the **project root** (next to `wrangler.toml`):
+
+```bash
+npx launch-edge-test-local
+```
+
+This runs the bundled `wrangler dev` for you. Extra arguments are forwarded (for example `--port 8788` or `--var BACKEND_URL=http://127.0.0.1:5173`). It is equivalent to `npx wrangler dev`.
+
+### Manual setup
+
+1. Run `npx create-launch-edge` (or ensure you have `functions/dev-worker.edge.js` and `wrangler.toml`). The init script creates these only if they are missing; it does **not** overwrite an existing `wrangler.toml`.
+2. In `wrangler.toml`, set `[vars] BACKEND_URL` to your local app origin (default `http://127.0.0.1:3000`). Wrangler is **already a dependency** of `@aryanbansal-launch/edge-utils`—you do not need `npm install -D wrangler` separately unless you want a different version pinned at the project root.
+3. Start your app on that port, then run `npx launch-edge-test-local` (or `npx wrangler dev`) from the **project root**.
+4. Open the URL Wrangler prints (for example `http://localhost:8787`). Traffic flows: browser → local Worker → `rewriteRequestToOrigin` → your handler → `fetch` to `BACKEND_URL`.
+
+Override the backend URL for a single session if needed:
+
+```bash
+npx launch-edge-test-local --var BACKEND_URL=http://127.0.0.1:5173
+```
+
+### In-repo example
+
+See [`examples/local-dev/`](examples/local-dev/) for a minimal runnable project (`npm install` in that folder, then `npm run dev` while a server listens on port 3000).
+
+### Caveats
+
+- **Hostname-based rules** (`protectWithBasicAuth`): matching uses both the request URL host and the `Host` header, so `hostnameIncludes: "localhost"` works with `npx launch-edge-test-local` even when the rewritten URL points at `127.0.0.1` (BACKEND_URL).
+- **Geo and client IP** (`getGeoHeaders`, `getClientIP`): these read request headers. Miniflare does not inject Cloudflare `cf` metadata the way production does; values may be empty unless you set headers yourself or configure Wrangler where supported.
+
+---
+
 ## 🛠️ CLI Commands
 
 ### `npx create-launch-edge`
@@ -953,6 +1113,18 @@ Next Steps:
 2. Customize your redirects, auth, and RSC paths
 3. Deploy your project to Contentstack Launch
 ```
+
+---
+
+### `npx launch-edge-test-local`
+
+Starts **Wrangler dev** using the Wrangler bundled with this package—no need to type `npx wrangler dev`. Run from the directory that contains `wrangler.toml` (usually your app root).
+
+```bash
+npx launch-edge-test-local
+```
+
+Arguments are passed through to `wrangler dev` (for example `--port 8788` or `--var BACKEND_URL=http://127.0.0.1:5173`).
 
 ---
 
@@ -1057,6 +1229,27 @@ npx launch-help
 - Return types and examples
 - CLI commands
 - Quick links to documentation
+## 📖 API Reference
+
+### 🧰 Local development
+
+- **`rewriteRequestToOrigin(request, backendOrigin)`**: Builds a new `Request` whose URL points at `backendOrigin` while preserving path, query, and body. Used by `functions/dev-worker.edge.js` so `passThrough` reaches your local server.
+
+### 🛡️ Security
+- **`blockAICrawlers(request, bots?)`**: Blocks common AI crawlers.
+- **`ipAccessControl(request, { allow?, deny? })`**: Simple IP-based firewall.
+
+### 🔐 Authentication
+- **`protectWithBasicAuth(request, options)`**: Prompt for credentials based on hostname.
+
+### 🔀 Redirection
+- **`redirectIfMatch(request, options)`**: Perform SEO-friendly redirects at the edge.
+
+### 📍 Geo Location
+- **`getGeoHeaders(request)`**: Returns an object with `country`, `region`, `city`, `latitude`, `longitude`.
+
+### ⚛️ Next.js
+- **`handleNextJS_RSC(request, { affectedPaths })`**: Resolves RSC header issues on Contentstack Launch.
 
 ---
 

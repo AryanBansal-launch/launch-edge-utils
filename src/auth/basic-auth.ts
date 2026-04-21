@@ -8,8 +8,16 @@ export function protectWithBasicAuth(
     }
   ): Promise<Response> | null {
     const url = new URL(request.url);
-  
-    if (!url.hostname.includes(options.hostnameIncludes)) {
+    // Match URL host, Host header, or X-Forwarded-Host (set by rewriteRequestToOrigin when
+    // the browser hits localhost:8787 but the request URL is rewritten to 127.0.0.1:3000).
+    const hostHeader = request.headers.get("host")?.split(":")[0] ?? "";
+    const forwardedHost =
+      request.headers.get("x-forwarded-host")?.split(":")[0] ?? "";
+    const hostMatches =
+      url.hostname.includes(options.hostnameIncludes) ||
+      hostHeader.includes(options.hostnameIncludes) ||
+      forwardedHost.includes(options.hostnameIncludes);
+    if (!hostMatches) {
       return null;
     }
   

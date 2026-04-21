@@ -1,0 +1,6 @@
+name = "edge-utils-local-dev-example"
+main = "worker.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+BACKEND_URL = "http://127.0.0.1:3000"
