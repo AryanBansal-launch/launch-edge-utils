@@ -66,6 +66,8 @@ ${colors.bright}${colors.green}1. Security & Access Control${colors.reset}
           password: string,
           realm?: string
         }
+    ${colors.dim}Hostname match:${colors.reset} URL host, Host header, or X-Forwarded-Host
+      (use with local Wrangler + rewriteRequestToOrigin)
     ${colors.dim}Returns:${colors.reset} Promise<Response> | null
     ${colors.dim}Example:${colors.reset}
       const auth = await protectWithBasicAuth(request, {
@@ -148,6 +150,14 @@ ${colors.bright}${colors.green}5. Response Utilities${colors.reset}
     ${colors.dim}Example:${colors.reset}
       return passThrough(request);
 
+  ${colors.cyan}rewriteRequestToOrigin(request, backendOrigin)${colors.reset}
+    Rewrite request URL to your local app (used by functions/dev-worker.edge.js)
+    ${colors.dim}Parameters:${colors.reset}
+      - request: Request object
+      - backendOrigin: string (e.g. http://127.0.0.1:3000 from BACKEND_URL)
+    ${colors.dim}Returns:${colors.reset} Request
+    ${colors.dim}Note:${colors.reset} Sets X-Forwarded-Host when host changes (Basic Auth + localhost)
+
 ${colors.bright}${colors.green}6. Configuration${colors.reset}
 
   ${colors.cyan}generateLaunchConfig(options)${colors.reset}
@@ -176,6 +186,34 @@ ${colors.dim}──────────────────────�
     Interactive CLI to manage launch.json
     Configure: redirects, rewrites, cache priming
     Supports bulk import from CSV/JSON files
+
+${colors.bright}${colors.yellow}🧪 LOCAL TESTING (Wrangler / Miniflare)${colors.reset}
+${colors.dim}────────────────────────────────────────────────────────────────────${colors.reset}
+
+  ${colors.cyan}npx create-launch-edge local${colors.reset}
+    Interactive wizard: pick a preset (redirect, JSON, basic auth, bots, Next.js RSC)
+    Writes or updates functions/[proxy].edge.js; creates dev-worker.edge.js + wrangler.toml if missing
+    ${colors.dim}Alias:${colors.reset} ${colors.cyan}npx launch-edge-local${colors.reset} (same as above)
+
+  ${colors.cyan}npx launch-edge-test-local${colors.reset}
+    Starts ${colors.dim}wrangler dev${colors.reset} using the Wrangler bundled with this package
+    Run from ${colors.bright}project root${colors.reset} (directory that contains wrangler.toml)
+    ${colors.dim}Extra args pass through:${colors.reset} --port 8788
+    ${colors.dim}Example:${colors.reset} npx launch-edge-test-local --var BACKEND_URL=http://127.0.0.1:5173
+
+  ${colors.bright}Typical flow${colors.reset}
+    1. ${colors.cyan}npx create-launch-edge local${colors.reset}  → choose preset, confirm overwrite if asked
+    2. Start your app on the port in ${colors.dim}BACKEND_URL${colors.reset} (see wrangler.toml; default 3000)
+    3. ${colors.cyan}npx launch-edge-test-local${colors.reset}
+    4. Open the URL Wrangler prints (often ${colors.dim}http://localhost:8787${colors.reset}) + path from the wizard
+
+  ${colors.bright}Quick checks${colors.reset}
+    ${colors.dim}•${colors.reset} JSON preset: open /api/edge-ping
+    ${colors.dim}•${colors.reset} Redirect preset: open the legacy path; expect 301
+    ${colors.dim}•${colors.reset} Basic auth preset: browser prompt (e.g. demo / demo); use hostnameIncludes localhost
+    ${colors.dim}•${colors.reset} Bots: ${colors.dim}curl -A "GPTBot" http://localhost:8787/${colors.reset} → 403
+
+  ${colors.bright}Before publishing${colors.reset}  ${colors.dim}npm run build${colors.reset} in this package so dist/ matches src/
 
   ${colors.cyan}npx launch-help${colors.reset}
     Display this help guide
