@@ -9,3 +9,5 @@ export * from "./security/block-default-domains.js";
 export * from "./geo/geo-headers.js";
 export * from "./launch/config.js";
 export * from "./nextjs/rsc.js";
+export * from "./middleware/chain.js";
+export { getClientIP } from "./utils/ip.js";

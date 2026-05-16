@@ -54,21 +54,22 @@ export default async function handler(request, context) {
   });
   if (rscResponse) return rscResponse;
 
-  // 2. 🛡️ Block AI bots immediately
+  // 2. 🛡️ Block AI/LLM crawlers (default list is AI-only — Googlebot/Bingbot
+  //    are NOT blocked, to preserve SEO). Pass ALL_BOTS if you want everything.
   const botResponse = blockAICrawlers(request);
   if (botResponse) return botResponse;
 
-  // 3. 🧱 IP Whitelisting
-  const ipResponse = ipAccessControl(request, { allow: ["203.0.113.10"] });
-  if (ipResponse) return ipResponse;
+  // 3. 🧱 IP allow-list (replace with real IPs; remove this block if not needed)
+  // const ipResponse = ipAccessControl(request, { allow: ["203.0.113.10"] });
+  // if (ipResponse) return ipResponse;
 
-  // 4. 🔐 Domain-specific Basic Auth
+  // 4. 🔐 Domain-specific Basic Auth (returns null on success, so the chain continues)
   const authResponse = await protectWithBasicAuth(request, {
     hostnameIncludes: "staging.myapp.com",
     username: "admin",
     password: "securepassword123"
   });
-  if (authResponse && authResponse.status === 401) return authResponse;
+  if (authResponse) return authResponse;
 
   // 5. 🔀 SEO-friendly Redirects
   const redirectResponse = redirectIfMatch(request, {
