@@ -1,6 +1,6 @@
 {
   "name": "@aryanbansal-launch/edge-utils",
-  "version": "0.1.12",
+  "version": "0.2.0",
   "license": "MIT",
   "type": "module",
   "repository": {
@@ -12,6 +12,7 @@
     "url": "https://github.com/AryanBansal-launch/launch-edge-utils/issues"
   },
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "create-launch-edge": "bin/launch-init.js",
     "launch-config": "bin/launch-config.js",
@@ -20,10 +21,18 @@
     "launch-edge-test-local": "./bin/launch-edge-test-local.js"
   },
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "dependencies": {
+  "optionalDependencies": {
     "wrangler": "^3.114.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
   },
   "files": [
     "dist",
@@ -32,6 +41,9 @@
   ],
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
