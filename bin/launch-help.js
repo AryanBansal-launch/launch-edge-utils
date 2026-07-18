@@ -131,6 +131,12 @@ ${colors.bright}${colors.green}4. Geo-Location${colors.reset}
         // Custom logic for US visitors
       }
 
+  ${colors.cyan}getClientIP(request)${colors.reset}
+    Get the client's IP address from Launch's forwarded headers
+    ${colors.dim}Parameters:${colors.reset}
+      - request: Request object
+    ${colors.dim}Returns:${colors.reset} string | null
+
 ${colors.bright}${colors.green}5. Response Utilities${colors.reset}
 
   ${colors.cyan}jsonResponse(body, init?)${colors.reset}
@@ -175,35 +181,88 @@ ${colors.bright}${colors.green}6. Configuration${colors.reset}
         cache: { cachePriming: { urls: ["/", "/about"] } }
       });
 
+${colors.bright}${colors.green}7. KV-backed config (local simulation / Workers deployment)${colors.reset}
+  ${colors.dim}Same shape as launch.json, read from a KV namespace instead — emulated locally${colors.reset}
+  ${colors.dim}by Miniflare (see LOCAL TESTING below), or a real namespace on Workers.${colors.reset}
+
+  ${colors.cyan}redirectFromKV(request, { kv, key?, status? })${colors.reset}
+    Read a redirect table from KV (default key "redirects"); returns a redirect
+    Response on match (exact path or trailing /* wildcard), else null
+
+  ${colors.cyan}rewriteFromKV(request, { kv, key? })${colors.reset}
+    Read a rewrite table from KV (default key "rewrites"); returns a new Request
+    with the path swapped (client URL unchanged) on match, else null
+
+  ${colors.cyan}primeCache({ urls, cache, keyBase?, fetchBase?, fetcher? })${colors.reset}
+  ${colors.cyan}primeCacheFromKV({ kv, cache, key?, ... })${colors.reset}
+    Warm the Cache API by fetching a list of URLs (or the list stored in KV,
+    default key "cache:priming") and storing cacheable responses
+
+  ${colors.cyan}serveWithCache(request, { cache, fetcher?, waitUntil? })${colors.reset}
+    Serve a GET from the Cache API when warm, else fetch and populate it;
+    adds ${colors.dim}X-Cache: HIT | MISS${colors.reset}
+
+  ${colors.cyan}matchRule(pathname, rules)${colors.reset}
+    The shared exact/wildcard matcher behind redirectFromKV and rewriteFromKV
+
+  ${colors.cyan}loadRedirects / loadRewrites / loadCachePrimingUrls${colors.reset}
+    Lower-level readers returning parsed config from KV (empty on missing keys)
+
 ${colors.bright}${colors.yellow}🛠️  CLI COMMANDS${colors.reset}
 ${colors.dim}────────────────────────────────────────────────────────────────────${colors.reset}
 
   ${colors.cyan}npx create-launch-edge${colors.reset}
     Initialize edge functions with boilerplate code
-    Creates: functions/[proxy].edge.js
+    Creates: functions/[proxy].edge.js (only if missing)
+
+  ${colors.bright}${colors.magenta}npx launch-edge-quickstart${colors.reset}  ${colors.dim}← fastest way to try everything${colors.reset}
+    One command: scaffold + seed local KV + run, with a status report
+    Creates whatever's missing (handler, dev-worker, wrangler.toml, sample
+    launch.json) — ${colors.bright}never${colors.reset} overwrites files you already have — seeds the
+    local KV from launch.json, then starts the dev server (auto-primes cache)
+    ${colors.dim}Extra args pass through:${colors.reset} --port 8788, --no-prime
+
+  ${colors.cyan}npx launch-edge-local${colors.reset}
+    Interactive wizard — pick a preset (see LOCAL TESTING below)
+    ${colors.dim}Alias:${colors.reset} ${colors.cyan}npx create-launch-edge local${colors.reset}
+
+  ${colors.cyan}npx launch-edge-seed-local${colors.reset}
+    Seed the local (Miniflare) KV namespace from launch.json
+    Writes keys: redirects, rewrites, cache:priming — re-run after editing launch.json
+
+  ${colors.cyan}npx launch-edge-test-local${colors.reset}
+    Starts ${colors.dim}wrangler dev${colors.reset} using the Wrangler bundled with this package
+    Run from ${colors.bright}project root${colors.reset} (directory that contains wrangler.toml)
+    Auto-primes the cache once ready (${colors.dim}GET /__prime${colors.reset}); pass --no-prime to skip
+    ${colors.dim}Extra args pass through:${colors.reset} --port 8788, --var BACKEND_URL=http://127.0.0.1:5173
 
   ${colors.cyan}npx launch-config${colors.reset}
     Interactive CLI to manage launch.json
     Configure: redirects, rewrites, cache priming
     Supports bulk import from CSV/JSON files
 
+  ${colors.cyan}npx launch-help${colors.reset}
+    Display this help guide
+
 ${colors.bright}${colors.yellow}🧪 LOCAL TESTING (Wrangler / Miniflare)${colors.reset}
 ${colors.dim}────────────────────────────────────────────────────────────────────${colors.reset}
 
-  ${colors.cyan}npx create-launch-edge local${colors.reset}
-    Interactive wizard: pick a preset (redirect, JSON, basic auth, bots, Next.js RSC)
-    Writes or updates functions/[proxy].edge.js; creates dev-worker.edge.js + wrangler.toml if missing
-    ${colors.dim}Alias:${colors.reset} ${colors.cyan}npx launch-edge-local${colors.reset} (same as above)
+  ${colors.bright}Fastest path${colors.reset}
+    ${colors.cyan}npx launch-edge-quickstart${colors.reset}
+    Scaffolds, seeds, and runs everything in one shot — see CLI COMMANDS above.
 
-  ${colors.cyan}npx launch-edge-test-local${colors.reset}
-    Starts ${colors.dim}wrangler dev${colors.reset} using the Wrangler bundled with this package
-    Run from ${colors.bright}project root${colors.reset} (directory that contains wrangler.toml)
-    ${colors.dim}Extra args pass through:${colors.reset} --port 8788
-    ${colors.dim}Example:${colors.reset} npx launch-edge-test-local --var BACKEND_URL=http://127.0.0.1:5173
+  ${colors.bright}Step-by-step (pick a specific preset)${colors.reset}
+    1. ${colors.cyan}npx launch-edge-local${colors.reset}  → choose a preset 1–8, confirm overwrite if asked
 
-  ${colors.bright}Typical flow${colors.reset}
-    1. ${colors.cyan}npx create-launch-edge local${colors.reset}  → choose preset, confirm overwrite if asked
-    2. Start your app on the port in ${colors.dim}BACKEND_URL${colors.reset} (see wrangler.toml; default 3000)
+       1) Redirect (code)     2) JSON route        3) Basic auth
+       4) Block AI crawlers   5) Next.js RSC fix
+       6) ${colors.magenta}KV redirects${colors.reset}         7) ${colors.magenta}KV rewrites${colors.reset}        8) ${colors.magenta}Cache priming${colors.reset}
+
+       Presets 6–8 also write a sample launch.json and simulate it via a local
+       KV namespace (functions/dev-worker.edge.js) — see KV-backed config above.
+
+    2. For presets 1–5: start your app on the port in ${colors.dim}BACKEND_URL${colors.reset} (wrangler.toml; default 3000)
+       For presets 6–8: ${colors.cyan}npx launch-edge-seed-local${colors.reset} (seed the local KV from launch.json)
     3. ${colors.cyan}npx launch-edge-test-local${colors.reset}
     4. Open the URL Wrangler prints (often ${colors.dim}http://localhost:8787${colors.reset}) + path from the wizard
 
@@ -212,11 +271,11 @@ ${colors.dim}──────────────────────�
     ${colors.dim}•${colors.reset} Redirect preset: open the legacy path; expect 301
     ${colors.dim}•${colors.reset} Basic auth preset: browser prompt (e.g. demo / demo); use hostnameIncludes localhost
     ${colors.dim}•${colors.reset} Bots: ${colors.dim}curl -A "GPTBot" http://localhost:8787/${colors.reset} → 403
+    ${colors.dim}•${colors.reset} KV redirects: /legacy/about → 301 to /about (wildcards: /old-shop/x → /shop/x)
+    ${colors.dim}•${colors.reset} KV rewrites: /docs/intro serves /blog/intro, URL unchanged
+    ${colors.dim}•${colors.reset} Cache priming: /about returns ${colors.dim}X-Cache: HIT${colors.reset} once warmed (needs Cache-Control on the response)
 
   ${colors.bright}Before publishing${colors.reset}  ${colors.dim}npm run build${colors.reset} in this package so dist/ matches src/
-
-  ${colors.cyan}npx launch-help${colors.reset}
-    Display this help guide
 
 ${colors.bright}${colors.yellow}📚 QUICK LINKS${colors.reset}
 ${colors.dim}────────────────────────────────────────────────────────────────────${colors.reset}

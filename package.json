@@ -18,7 +18,9 @@
     "launch-config": "bin/launch-config.js",
     "launch-help": "bin/launch-help.js",
     "launch-edge-local": "./bin/launch-edge-local.js",
-    "launch-edge-test-local": "./bin/launch-edge-test-local.js"
+    "launch-edge-test-local": "./bin/launch-edge-test-local.js",
+    "launch-edge-seed-local": "./bin/launch-edge-seed-local.js",
+    "launch-edge-quickstart": "./bin/launch-edge-quickstart.js"
   },
   "exports": {
     ".": {

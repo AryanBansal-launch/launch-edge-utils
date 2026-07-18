@@ -4,3 +4,11 @@ compatibility_date = "2024-01-01"
 
 [vars]
 BACKEND_URL = "http://127.0.0.1:3000"
+
+# Local KV namespace used to simulate Launch redirects / rewrites / cache
+# priming config. The `id` is only a placeholder — with `wrangler dev` (Miniflare)
+# the store is emulated on disk under the persist dir; no Cloudflare account is
+# needed. Seed it with `npm run seed`.
+[[kv_namespaces]]
+binding = "EDGE_CONFIG"
+id = "edge_config_local_placeholder"
