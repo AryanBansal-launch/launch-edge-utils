@@ -1,0 +1,4 @@
+[
+  { "source": "/home", "destination": "/" },
+  { "source": "/docs/*", "destination": "/blog/*" }
+]

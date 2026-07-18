@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "launch-edge-test-local"
+    "seed": "node seed-kv.mjs",
+    "dev": "launch-edge-test-local --persist-to .wrangler-local",
+    "start": "npm run seed && npm run dev"
   },
   "dependencies": {
     "@aryanbansal-launch/edge-utils": "file:../.."

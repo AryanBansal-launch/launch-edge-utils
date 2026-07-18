@@ -1,0 +1,6 @@
+[
+  { "source": "/legacy/about", "destination": "/about", "statusCode": 301 },
+  { "source": "/products/old-sku-123", "destination": "/products/new-sku-456", "statusCode": 308 },
+  { "source": "/old-shop/*", "destination": "/shop/*", "statusCode": 301 },
+  { "source": "/archive/*", "destination": "/blog/archive/*", "statusCode": 301 }
+]

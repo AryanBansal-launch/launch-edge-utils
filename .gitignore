@@ -3,8 +3,12 @@ node_modules
 
 # Build output
 dist/
-lib/
+/lib/
 *.tsbuildinfo
+
+# Wrangler / Miniflare local state
+.wrangler/
+.wrangler-local/
 
 # Environment variables
 .env
